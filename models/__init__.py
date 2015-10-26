@@ -18,3 +18,7 @@
 #
 ##############################################################################
 import wcfmc
+import postcode_config
+import product
+import crm_lead
+import sale
