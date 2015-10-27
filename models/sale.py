@@ -36,9 +36,8 @@ class sale_order(models.Model):
 
     @api.model
     def create(self, vals):
-        print"=====valsss=====",vals
         if vals.get('wcfmc_id',False):
-            print"test"
+            wcfmc = vals.get('wcfmc_id',False)
         return super(sale_order, self).create(vals)
         
 sale_order()
