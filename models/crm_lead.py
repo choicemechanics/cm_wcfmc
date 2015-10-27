@@ -37,6 +37,7 @@ class crm_lead(models.Model):
     def create(self, vals):
         print"vals",vals,self
         if vals.get('partner_id',False):
+            product_tmpl_obj = self.env['product.template']
             product_obj = self.env['product.product']
             postcode_obj = self.env['cm.postcode']
             sale_obj = self.env['sale.order']
@@ -44,22 +45,28 @@ class crm_lead(models.Model):
             stage_obj = self.env['crm.stage']
             stage_ids = stage_obj.search([('name', '=', "Quoted")])
             if vals.get('name'):
-                prod_ids = product_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
+                prod_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
+                print"====prod_ids====",prod_ids
             if vals.get('postcode'):
                 postcode_ids = postcode_obj.search([('part_1', '=', vals.get('postcode')[:3])])
-            if vals.get('wcfmc_id') and vals.get('text') is null and prod_ids and postcode_ids:
+            if vals.get('wcfmc_id',False) and not vals.get('text',False) and prod_ids and postcode_ids:
                 vals = { 
                     'wcfmc_id' : vals.get('wcfmc_id'),
                     'partner_id' : vals.get('partner_id'),
                     'partner_shipping_id' : vals.get('partner_id'),
+                    'name' : self.env['ir.sequence'].next_by_code('sale.order')
                     }
+                print"===vals===",vals
                 order_id = sale_obj.create(vals)
                 if prod_ids and order_id:
+                    product_id = product_obj.search([('product_tmpl_id', '=', prod_ids[0].id)])
                     order_line_vals = {
-                        'product_id': prod_ids[0].id,
+                        'product_id': product_id[0].id,
                         'price_unit' : 1,
                         'product_uom_qty' : 1,
-                        'order_id' : order_id[0].id
+                        'product_uom' : product_id[0].product_tmpl_id.uom_id.id,
+                        'order_id' : order_id[0].id,
+                        'name' : product_id[0].product_tmpl_id.name
                         }
                     order_line_id = sale_line_obj.create(order_line_vals)
                     if stage_ids:
