@@ -23,10 +23,14 @@ from openerp import models, fields, api, _
 class scheduler_cm(models.Model):
     _name = "scheduler.cm"
     
-    def get_new_leads_dummy(self):
-        return True
+    @api.model
+    def get_new_leads_dummy(self, ids=None):
+        res = None
+        return res
     
     
-    def update_quotations_dummy(self):
-        return True
+    @api.model
+    def update_quotations_dummy(self, ids=None):
+        res = None
+        return res
         
