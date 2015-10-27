@@ -35,7 +35,6 @@ class crm_lead(models.Model):
 
     @api.model
     def create(self, vals):
-        print"vals",vals,self
         if vals.get('partner_id',False):
             product_tmpl_obj = self.env['product.template']
             product_obj = self.env['product.product']
@@ -46,7 +45,6 @@ class crm_lead(models.Model):
             stage_ids = stage_obj.search([('name', '=', "Quoted")])
             if vals.get('name'):
                 prod_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
-                print"====prod_ids====",prod_ids
             if vals.get('postcode'):
                 postcode_ids = postcode_obj.search([('part_1', '=', vals.get('postcode')[:3])])
             if vals.get('wcfmc_id',False) and not vals.get('text',False) and prod_ids and postcode_ids:
@@ -56,7 +54,6 @@ class crm_lead(models.Model):
                     'partner_shipping_id' : vals.get('partner_id'),
                     'name' : self.env['ir.sequence'].next_by_code('sale.order')
                     }
-                print"===vals===",vals
                 order_id = sale_obj.create(vals)
                 if prod_ids and order_id:
                     product_id = product_obj.search([('product_tmpl_id', '=', prod_ids[0].id)])
