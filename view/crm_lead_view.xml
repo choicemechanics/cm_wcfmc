@@ -5,15 +5,15 @@
         <record id="view_for_crm_lead_form" model="ir.ui.view">
             <field name="name">view.for.crm.lead.form</field>
             <field name="model">crm.lead</field>
-            <field name="inherit_id" ref="crm.crm_case_form_view_leads"/>
+            <field name="inherit_id" ref="crm.crm_case_form_view_oppor"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='user_id']" position="after">
+                <xpath expr="//field[@name='team_id']" position="after">
                         <field name="wcfmc_id"/>
                         <field name="car_registration"/>
                         <field name="fuel"/>
                         <field name="make_model"/>
                 </xpath>
-                <xpath expr="//field[@name='priority']" position="after">
+                <xpath expr="//field[@name='tag_ids']" position="after">
                         <field name="transmission"/>
                         <field name="registration_year"/>
                         <field name="city"/>
