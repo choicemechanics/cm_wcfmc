@@ -28,6 +28,24 @@
                                 <field name="runscope_auth_token" class="oe_inline" />
                                 <label for="runscope_auth_token"/>
                             </div>
+                            <div>
+                                <field name="quote_message" class="oe_inline" />
+                                <label for="quote_message"/>
+                                <p>
+                                    You can use the following tags in the quote message to insert customer specific data:
+                                </p>
+                                <ul>
+                                    <li>{name}</li>
+                                    <li>{wcfmc_id}</li>
+                                    <li>{service}</li>
+                                    <li>{vehicle_registration}</li>
+                                    <li>{make_model}</li>
+                                    <li>{registration_year}</li>
+                                    <li>{city}</li>
+                                    <li>{postcode}</li>
+                                    <li>{comments}</li>
+                                </ul>
+                            </div>
                         </div>
                     </group>
                 </form>

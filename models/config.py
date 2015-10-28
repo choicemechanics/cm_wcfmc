@@ -27,6 +27,7 @@ class cm_wcfmc_config_settings(models.TransientModel):
     wcfmc_email = fields.Char(string='Email')
     wcfmc_password = fields.Char(string='Password')
     runscope_auth_token = fields.Text(string='Token')
+    quote_message = fields.Text(string='Quote Message')
     
     def get_default_wcfmc_email(self, cr, uid, ids, context=None):
         email = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.wcfmc.email", context=context)
@@ -54,5 +55,14 @@ class cm_wcfmc_config_settings(models.TransientModel):
         config_parameters = self.pool.get("ir.config_parameter")
         record = self.browse(cr, uid, ids[0], context=context)
         config_parameters.set_param(cr, uid, "cm.wcfmc.runscope_auth_token", record.runscope_auth_token or '', context=context)
+        
+    def get_default_quote_message(self, cr, uid, ids, context=None):
+        quote_message = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.wcfmc.quote_message", context=context)
+        return {'quote_message': quote_message}
+
+    def set_quote_message(self, cr, uid, ids, context=None):
+        config_parameters = self.pool.get("ir.config_parameter")
+        record = self.browse(cr, uid, ids[0], context=context)
+        config_parameters.set_param(cr, uid, "cm.wcfmc.quote_message", record.quote_message or '', context=context)
         
 cm_wcfmc_config_settings()

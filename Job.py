@@ -8,7 +8,7 @@ class Job():
 		self.service = service
 		self.vehicle_registration = re.sub(r'[\W_]+', '', vehicle_registration).upper() # keep only letters and numbers
 		self.make_model = make_model
-		self.registration_year = registration_year
+		self.registration_year = re.sub("[^0-9]", '', registration_year) # keep only numbers
 		self.city = city
 		self.postcode = re.sub(r'[\W_]+', '', postcode).upper() # keep only letters and numbers
 		self.contact_first_name = contact_first_name

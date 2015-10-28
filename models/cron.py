@@ -27,6 +27,7 @@ from .. import WhoCanFixMyCar, wcfmc_exceptions
 
 class cm_cron(models.Model):
     _name = "cm.cron"
+    wcfmc = None
 
     def _get_email(self):
         return self.env["ir.config_parameter"].get_param("cm.wcfmc.email")
@@ -36,6 +37,13 @@ class cm_cron(models.Model):
 
     def _get_auth_token(self):
         return self.env["ir.config_parameter"].get_param("cm.runscope_auth_token")
+
+    def get_wcfmc_instance(self):
+        """ Factory for WhoCanFixMyCar instance. Returns cached instance if exists """
+        if self.wcfmc:
+            return self.wcfmc
+        else:
+            return WhoCanFixMyCar.WhoCanFixMyCar(self._get_email(), self._get_password())
     
     @api.model
     def get_new_leads(self, ids=None):
@@ -44,7 +52,7 @@ class cm_cron(models.Model):
 
         # login to wcfmc and raise login exception
         try:
-            wcfmc = WhoCanFixMyCar.WhoCanFixMyCar(self._get_email(), self._get_password())
+            self.wcfmc = self.get_wcfmc_instance()
         except wcfmc_exceptions.LoginError as e:
             if e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_EMAIL_PASSWORD_NOT_SET\
                 or e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_LOGIN_WRONG:
@@ -52,7 +60,7 @@ class cm_cron(models.Model):
                                         "and password in Settings > General Settings > WCFMC Settings. Error message: ") + e.message)
 
         # get job ids from find jobs page
-        job_ids = wcfmc.get_find_job_ids()
+        job_ids = self.wcfmc.get_find_job_ids()
         lead_obj = self.env['crm.lead']
         partner_obj = self.env['res.partner']
 
@@ -64,7 +72,7 @@ class cm_cron(models.Model):
             if existing_lead:
                 continue
 
-            job = wcfmc.get_job(job_id)
+            job = self.wcfmc.get_job(job_id)
 
             # find existing partner using vehicle reg, or create new one
             partner_ids = partner_obj.search([('vehicle_registration', '=', job.vehicle_registration)])
@@ -93,6 +101,7 @@ class cm_cron(models.Model):
             lead_id = lead_obj.create(vals)
             _logger.info("Created lead for job: " + job_id)
 
+        self.wcfmc = None
         _logger.info("Finished get new leads cron")
         return True
     
