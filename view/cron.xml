@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<odoo>
+<openerp>
     <data noupdate="1">
 
         <record forcecreate="True" id="ir_cron_scheduler_get_new_leads" model="ir.cron">
@@ -26,4 +26,4 @@
             <field eval="'update_quotations'" name="function" />
         </record>
     </data>
-</odoo>
+</openerp>

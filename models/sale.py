@@ -36,25 +36,24 @@ class sale_order(models.Model):
     @api.model
     def create(self, vals):
         """ Send quotation to WCFMC """
-        import ipdb; ipdb.set_trace()
         so = super(sale_order, self).create(vals)
         if vals.get('wcfmc_id') and so.state == 'draft':
             wcfmc_id = vals.get('wcfmc_id')
 
             # construct message get quote total
-            quote = str(self.amount_total)
-            message = self.env["ir.config_parameter"].get_param("cm.quote_message")
+            quote = str(so.amount_total)
+            message = self.env["ir.config_parameter"].get_param("cm.wcfmc.quote_message")
             if not message:
                 raise odoo_exceptions.UserError(_("Please set a WCFMC quote message in Settings > General Settings > WCFMC Settings"))
+            message = message.replace('{price}', str(so.amount_total))
             message = message.replace('{name}', so.partner_id.name)
-            message = message.replace('{wcfmc_id}', so.wcfmc_id) 
+            message = message.replace('{wcfmc_id}', str(so.wcfmc_id))
             message = message.replace('{service}', so.order_line[0].product_id[0].name) 
             message = message.replace('{vehicle_registration}', so.vehicle_registration)
             message = message.replace('{make_model}', so.make_model)
-            message = message.replace('{registration_year}', so.registration_year)
+            message = message.replace('{registration_year}', str(so.registration_year))
             message = message.replace('{city}', so.city)
             message = message.replace('{postcode}', so.postcode)
-            message = message.replace('{comments}', so.comments)
 
             wcfmc = self.env['cm.cron'].get_wcfmc_instance()
             wcfmc.apply_for_job(wcfmc_id, message, quote)

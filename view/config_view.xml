@@ -35,6 +35,7 @@
                                     You can use the following tags in the quote message to insert customer specific data:
                                 </p>
                                 <ul>
+                                    <li>{price}</li>
                                     <li>{name}</li>
                                     <li>{wcfmc_id}</li>
                                     <li>{service}</li>
@@ -43,7 +44,6 @@
                                     <li>{registration_year}</li>
                                     <li>{city}</li>
                                     <li>{postcode}</li>
-                                    <li>{comments}</li>
                                 </ul>
                             </div>
                         </div>

@@ -13,8 +13,6 @@
                         <field name="fuel"/>
                         <field name="make_model"/>
                         <field name="city"/>
-                </xpath>
-                <xpath expr="//field[@name='payment_term_id']" position="after">
                         <field name="transmission"/>
                         <field name="registration_year"/>
                         <field name="postcode"/>

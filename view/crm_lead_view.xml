@@ -7,13 +7,11 @@
             <field name="model">crm.lead</field>
             <field name="inherit_id" ref="crm.crm_case_form_view_oppor"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='team_id']" position="after">
+                <xpath expr="//field[@name='categ_ids']" position="after">
                         <field name="wcfmc_id"/>
                         <field name="vehicle_registration"/>
                         <field name="fuel"/>
                         <field name="make_model"/>
-                </xpath>
-                <xpath expr="//field[@name='tag_ids']" position="after">
                         <field name="transmission"/>
                         <field name="registration_year"/>
                         <field name="city"/>
