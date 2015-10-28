@@ -20,6 +20,8 @@
 
 from openerp import models, fields, api, _
 
+from .. import wcfmc_exceptions
+
 class crm_lead(models.Model):
     _inherit = "crm.lead"
     
@@ -32,44 +34,77 @@ class crm_lead(models.Model):
     city = fields.Char(string="City")
     postcode = fields.Char(string="Postcode")
 
-
     @api.model
     def create(self, vals):
-        if vals.get('partner_id',False):
-            product_tmpl_obj = self.env['product.template']
-            product_obj = self.env['product.product']
-            postcode_obj = self.env['cm.postcode']
-            sale_obj = self.env['sale.order']
-            sale_line_obj = self.env['sale.order.line']
-            stage_obj = self.env['crm.stage']
-            stage_ids = stage_obj.search([('name', '=', "Quoted")])
-            if vals.get('name'):
-                prod_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
-            if vals.get('postcode'):
-                postcode_ids = postcode_obj.search([('part_1', '=', vals.get('postcode')[:3])])
-            if vals.get('wcfmc_id',False) and not vals.get('text',False) and prod_ids and postcode_ids:
-                vals = { 
-                    'wcfmc_id' : vals.get('wcfmc_id'),
-                    'partner_id' : vals.get('partner_id'),
-                    'partner_shipping_id' : vals.get('partner_id'),
-                    'name' : self.env['ir.sequence'].next_by_code('sale.order')
-                    }
-                order_id = sale_obj.create(vals)
-                if prod_ids and order_id:
-                    product_id = product_obj.search([('product_tmpl_id', '=', prod_ids[0].id)])
-                    order_line_vals = {
-                        'product_id': product_id[0].id,
-                        'price_unit' : 1,
-                        'product_uom_qty' : 1,
-                        'product_uom' : product_id[0].product_tmpl_id.uom_id.id,
-                        'order_id' : order_id[0].id,
-                        'name' : product_id[0].product_tmpl_id.name
+        """ 
+        Automatically quote leads within served postcode area and with
+        products whose wcfmc_job_name field matches the lead name
+        and if there are no comments
+        """
+        sale_order = None
+        stage_obj = self.env['crm.stage']
+        product_tmpl_obj = self.env['product.template']
+        product_obj = self.env['product.product']
+        postcode_obj = self.env['cm.postcode']
+        sale_obj = self.env['sale.order']
+        sale_line_obj = self.env['sale.order.line']
+
+        # Is lead qualified? (within postcode range and for offered services)
+        if vals.get('postcode') and vals.get('name'):
+            qualified_stage_ids = stage_obj.search([('name', '=', 'Qualified')])
+            if not qualified_stage_ids:
+                raise wcfmc_exceptions.LeadStageError("Missing Qualified stage")
+
+            postcode_ids = postcode_obj.search([('part_1', '=', vals.get('postcode')[:3])])
+            product_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
+            
+            # Lead is qualified
+            if postcode_ids and product_ids:
+
+                # set stage to qualified
+                vals['stage_id'] = qualified_stage_ids[0].id
+
+                # Can we auto quote?
+                if vals.get('partner_id') and vals.get('name') and vals.get('postcode') and vals.get('wcfmc_id'):
+                    quoted_stage_ids = stage_obj.search([('name', '=', "Quoted")])
+                    if not quoted_stage_ids:
+                        raise wcfmc_exceptions.LeadStageError("Missing Quoted stage")
+
+                    # We can auto quote (no comment)
+                    if not vals.get('text'):
+
+                        # create the sale.order (quotation)
+                        sale_order_vals = {
+                            'wcfmc_id' : vals.get('wcfmc_id'),
+                            'partner_id' : vals.get('partner_id'),
+                            'partner_shipping_id' : vals.get('partner_id'),
+                            'name' : self.env['ir.sequence'].next_by_code('sale.order'),
                         }
-                    order_line_id = sale_line_obj.create(order_line_vals)
-                    if stage_ids:
-                        self.write({'stage_id' : stage_ids[0].id})
-                    self._cr.commit()
-        return super(crm_lead, self).create(vals)
-        
+                        sale_order = sale_obj.create(sale_order_vals)
+
+                        # create the sale.order lines
+                        product_id = product_obj.search([('product_tmpl_id', '=', product_ids[0].id)])
+                        sale_order_line_vals = {
+                            'product_id': product_id[0].id,
+                            'price_unit' : 1,
+                            'product_uom_qty' : 1,
+                            'product_uom' : product_id[0].product_tmpl_id.uom_id.id,
+                            'order_id' : sale_order[0].id,
+                            'name' : product_id[0].product_tmpl_id.name,
+                        }
+                        sale_order_line_id = sale_line_obj.create(sale_order_line_vals)
+
+                        # set lead stage to quoted
+                        if quoted_stage_ids:
+                            vals['stage_id'] = quoted_stage_ids[0].id
+
+        # create the lead
+        lead = super(crm_lead, self).create(vals)
+
+        # link sale.order with crm.lead
+        if sale_order:
+            sale_order.opportunity_id = lead.id
+
+        return lead
         
 crm_lead()

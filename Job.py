@@ -10,7 +10,7 @@ class Job():
 		self.make_model = make_model
 		self.registration_year = registration_year
 		self.city = city
-		self.postcode = postcode
+		self.postcode = re.sub(r'[\W_]+', '', postcode).upper() # keep only letters and numbers
 		self.contact_first_name = contact_first_name
 		self.comments = comments
 

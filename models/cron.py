@@ -18,6 +18,9 @@
 #
 ##############################################################################
 
+import logging
+_logger = logging.getLogger(__name__)
+
 from openerp import models, fields, api, _
 from openerp import exceptions as odoo_exceptions
 from .. import WhoCanFixMyCar, wcfmc_exceptions
@@ -37,7 +40,9 @@ class cm_cron(models.Model):
     @api.model
     def get_new_leads(self, ids=None):
         """ Gets jobs from WCFMC and creates POs for them """
-        # login to wcfmc and catch login exception
+        _logger.info("Running get new leads cron")
+
+        # login to wcfmc and raise login exception
         try:
             wcfmc = WhoCanFixMyCar.WhoCanFixMyCar(self._get_email(), self._get_password())
         except wcfmc_exceptions.LoginError as e:
@@ -55,15 +60,15 @@ class cm_cron(models.Model):
         for job_id in job_ids:
 
             # see if job already exists as lead in odoo
-            existing_lead = lead_obj.search([('wcfmc_id', '=', job_id)])
+            existing_lead = lead_obj.search([('wcfmc_id', '=', int(job_id))])
             if existing_lead:
                 continue
 
             job = wcfmc.get_job(job_id)
 
             # find existing partner using vehicle reg, or create new one
-            parter_ids = partner_obj.search([('vehicle_registration', '=', job.vehicle_registration)])
-            if not parter_ids:
+            partner_ids = partner_obj.search([('vehicle_registration', '=', job.vehicle_registration)])
+            if not partner_ids:
                 vals = {
                     'name': job.contact_first_name,
                     'vehicle_registration': job.vehicle_registration,
@@ -82,15 +87,19 @@ class cm_cron(models.Model):
                 'registration_year': job.registration_year,
                 'city': job.city,
                 'postcode': job.postcode,
-                'description': job.comments,
+                'description': '\n'.join(job.comments),
                 'partner_id': partner.id,
             }
             lead_id = lead_obj.create(vals)
+            _logger.info("Created lead for job: " + job_id)
 
+        _logger.info("Finished get new leads cron")
         return True
     
     @api.model
     def update_quotations(self, ids=None):
+        _logger.info("Running update quotations cron")
+        _logger.info("Finished update quotations cron")
         return True
 
 cm_cron()
