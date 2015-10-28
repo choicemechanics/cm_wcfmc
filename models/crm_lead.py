@@ -18,6 +18,9 @@
 #
 ##############################################################################
 
+import logging
+_logger = logging.getLogger(__name__)
+
 from openerp import models, fields, api, _
 
 from .. import wcfmc_exceptions
@@ -26,8 +29,8 @@ class crm_lead(models.Model):
     _inherit = "crm.lead"
     
     wcfmc_id = fields.Integer(string="WCFMC ID")
-    vehicle_registration = fields.Char(string="Car Registration")
-    make_model = fields.Char(string="Model")
+    vehicle_registration = fields.Char(string="Vehicle Registration")
+    make_model = fields.Char(string="Make and Model")
     fuel = fields.Selection([('petrol', 'Petrol'),('diesel', 'Diesel')], string='Fuel')
     transmission = fields.Selection([('manual', 'Manual'),('automatic', 'Automatic')], string='Transmission')
     registration_year = fields.Integer(string="Registration Year")
@@ -42,7 +45,7 @@ class crm_lead(models.Model):
         and if there are no comments
         """
         sale_order = None
-        stage_obj = self.env['crm.stage']
+        stage_obj = self.env['crm.case.stage']
         product_tmpl_obj = self.env['product.template']
         product_obj = self.env['product.product']
         postcode_obj = self.env['cm.postcode']
@@ -71,7 +74,7 @@ class crm_lead(models.Model):
                         raise wcfmc_exceptions.LeadStageError("Missing Quoted stage")
 
                     # We can auto quote (no comment)
-                    if not vals.get('text'):
+                    if not vals.get('description'):
 
                         # create the sale.order (quotation)
                         sale_order_vals = {
@@ -79,6 +82,11 @@ class crm_lead(models.Model):
                             'partner_id' : vals.get('partner_id'),
                             'partner_shipping_id' : vals.get('partner_id'),
                             'name' : self.env['ir.sequence'].next_by_code('sale.order'),
+                            'vehicle_registration': vals.get('vehicle_registration'),
+                            'make_model': vals.get('make_model'),
+                            'registration_year': vals.get('registration_year'),
+                            'city': vals.get('city'),
+                            'postcode': vals.get('postcode'),
                         }
                         sale_order = sale_obj.create(sale_order_vals)
 
@@ -97,6 +105,8 @@ class crm_lead(models.Model):
                         # set lead stage to quoted
                         if quoted_stage_ids:
                             vals['stage_id'] = quoted_stage_ids[0].id
+
+                        _logger.info('Created quotation for job: ' + vals['wcfmc_id'])
 
         # create the lead
         lead = super(crm_lead, self).create(vals)

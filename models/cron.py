@@ -56,7 +56,7 @@ class cm_cron(models.Model):
         except wcfmc_exceptions.LoginError as e:
             if e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_EMAIL_PASSWORD_NOT_SET\
                 or e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_LOGIN_WRONG:
-                raise odoo_exceptions.UserError(_("Could not login to whocanfixmycar, please check the email " +\
+                raise odoo_exceptions.except_orm(_("Could not log in"), _("Could not login to whocanfixmycar, please check the email " +\
                                         "and password in Settings > General Settings > WCFMC Settings. Error message: ") + e.message)
 
         # get job ids from find jobs page
@@ -87,6 +87,7 @@ class cm_cron(models.Model):
 
             # extract values and create the lead
             vals = {
+                'type': 'opportunity',
                 'name': job.service,
                 'vehicle_registration': job.vehicle_registration,
                 'wcfmc_id': job.wcfmc_id,
@@ -99,6 +100,7 @@ class cm_cron(models.Model):
                 'partner_id': partner.id,
             }
             lead_id = lead_obj.create(vals)
+            self.env.cr.commit()
             _logger.info("Created lead for job: " + job_id)
 
         self.wcfmc = None
