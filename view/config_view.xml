@@ -2,23 +2,23 @@
 <openerp>
     <data>
         
-        <record id="view_postcode_config_settings" model="ir.ui.view">
-            <field name="name">Postcode congfiguration settings</field>
-            <field name="model">postcode.config.settings</field>
+        <record id="view_cm_wcfmc_config_settings" model="ir.ui.view">
+            <field name="name">cm wcfmc congfiguration settings</field>
+            <field name="model">cm.wcfmc.config.settings</field>
             <field name="arch" type="xml">
-                <form string="Configure Postcode" class="oe_form_configuration">
+                <form string="Configure cm_wcfmc" class="oe_form_configuration">
                     <header>
                         <button string="Apply" type="object" name="execute" class="oe_highlight"/>
                         or
                         <button string="Cancel" type="object" name="cancel" class="oe_link"/>
                     </header>
-                    <separator string="Postcode Setting"/>
-                    <group name="wcfmc_username">
+                    <separator string="WCFMC Settings"/>
+                    <group name="wcfmc_email">
                         <label for="id" string="Setting"/>
                         <div>
                             <div>
-                                <field name="wcfmc_username" class="oe_inline"/>
-                                <label for="wcfmc_username"/>
+                                <field name="wcfmc_email" class="oe_inline"/>
+                                <label for="wcfmc_email"/>
                             </div>
                             <div>
                                 <field name="wcfmc_password" class="oe_inline"/>
@@ -36,16 +36,16 @@
 
         
         
-       <record id="action_postcode_config_settings" model="ir.actions.act_window">
-            <field name="name">Configure Postcode</field>
+       <record id="action_cm_wcfmc_config_settings" model="ir.actions.act_window">
+            <field name="name">Configure cm_wcfmc</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">postcode.config.settings</field>
+            <field name="res_model">cm.wcfmc.config.settings</field>
             <field name="view_mode">form</field>
             <field name="target">inline</field>
         </record>
 
-        <menuitem id="menu_postcode_config_settings" name="Postcode Setting" parent="base.menu_config"
-            sequence="10" action="action_postcode_config_settings"/>
+        <menuitem id="menu_cm_wcfmc_config_settings" name="WCFMC Setting" parent="base.menu_config"
+            sequence="10" action="action_cm_wcfmc_config_settings"/>
         
         
    </data>

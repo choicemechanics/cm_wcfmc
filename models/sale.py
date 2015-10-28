@@ -24,7 +24,7 @@ class sale_order(models.Model):
     _inherit = "sale.order"
     
     wcfmc_id = fields.Integer(string="WCFMC ID")
-    car_registration = fields.Char(string="Car Registration")
+    vehicle_registration = fields.Char(string="Car Registration")
     make_model = fields.Char(string="Model")
     fuel = fields.Selection([('petrol', 'Petrol'),('diesel', 'Diesel')], string='Fuel')
     transmission = fields.Selection([('manual', 'Manual'),('automatic', 'Automatic')], string='Transmission')

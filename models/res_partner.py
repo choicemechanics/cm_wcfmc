@@ -20,17 +20,9 @@
 
 from openerp import models, fields, api, _
 
-class scheduler_cm(models.Model):
-    _name = "scheduler.cm"
+class res_partner(models.Model):
+    _inherit = "res.partner"
     
-    @api.model
-    def get_new_leads_dummy(self, ids=None):
-        res = None
-        return res
-    
-    
-    @api.model
-    def update_quotations_dummy(self, ids=None):
-        res = None
-        return res
+    vehicle_registration = fields.Char(string="Vehicle Registration")
         
+res_partner()

@@ -17,8 +17,9 @@
 #    <http://www.gnu.org/licenses/gpl.html>.
 #
 ##############################################################################
-import wcfmc
-import postcode_config
+import cron
+import config
 import product
 import crm_lead
 import sale
+import res_partner

@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='team_id']" position="after">
                         <field name="wcfmc_id"/>
-                        <field name="car_registration"/>
+                        <field name="vehicle_registration"/>
                         <field name="fuel"/>
                         <field name="make_model"/>
                 </xpath>
