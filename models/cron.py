@@ -19,11 +19,13 @@
 ##############################################################################
 
 import logging
-_logger = logging.getLogger(__name__)
+import datetime
 
 from openerp import models, fields, api, _
 from openerp import exceptions as odoo_exceptions
 from .. import WhoCanFixMyCar, wcfmc_exceptions
+
+_logger = logging.getLogger(__name__)
 
 class cm_cron(models.Model):
     _name = "cm.cron"
@@ -37,6 +39,14 @@ class cm_cron(models.Model):
 
     def _get_auth_token(self):
         return self.env["ir.config_parameter"].get_param("cm.runscope_auth_token")
+
+    def _get_email_create_date(self):
+        """ 
+        Returns the create date for the cm.wcfmc.email field. This is used as the earliest date
+        for which to get jobs from wcfmc, otherwise this module would download the entire wcfmc db!
+        """
+        date_str = self.env['ir.config_parameter'].search([('key', '=', 'cm.wcfmc.email')]).create_date
+        return datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').date()
 
     def get_wcfmc_instance(self):
         """ Factory for WhoCanFixMyCar instance. Returns cached instance if exists """
@@ -59,20 +69,38 @@ class cm_cron(models.Model):
                 raise odoo_exceptions.except_orm(_("Could not log in"), _("Could not login to whocanfixmycar, please check the email " +\
                                         "and password in Settings > General Settings > WCFMC Settings. Error message: ") + e.message)
 
-        # get job ids from find jobs page
-        job_ids = self.wcfmc.get_find_job_ids()
+        # get all new job ids
         lead_obj = self.env['crm.lead']
         partner_obj = self.env['res.partner']
 
+        page_number = 1
+        wcfmc_ids = []
+        earliest_date = self._get_email_create_date()
+        stop_fetching = False
+
+        while not stop_fetching:
+            _logger.info("Fetching wcfmc ids from page " + str(page_number))
+
+            # save job ids only for new jobs. Stop fetching once we recognise a job, or the jobs are older than the earliest_date
+            latest_wcfmc_ids, hit_earliest_date = self.wcfmc.get_latest_wcfmc_ids(page_number, earliest_date)
+            latest_wcfmc_ids_with_lead = [lead.wcfmc_id for lead in lead_obj.search([('wcfmc_id', 'in', latest_wcfmc_ids)])]
+            latest_wcfmc_ids_without_lead = [wcfmc_id for wcfmc_id in latest_wcfmc_ids if wcfmc_id not in latest_wcfmc_ids_with_lead]
+            wcfmc_ids += latest_wcfmc_ids_without_lead
+
+            if len(latest_wcfmc_ids_with_lead) > 0 or hit_earliest_date:
+                stop_fetching = True
+            else:
+                page_number += 1
+
         # get details for each job
-        for job_id in job_ids:
+        for wcfmc_id in set(wcfmc_ids):
 
             # see if job already exists as lead in odoo
-            existing_lead = lead_obj.search([('wcfmc_id', '=', int(job_id))])
+            existing_lead = lead_obj.search([('wcfmc_id', '=', wcfmc_id)])
             if existing_lead:
                 continue
 
-            job = self.wcfmc.get_job(job_id)
+            job = self.wcfmc.get_job(wcfmc_id)
 
             # find existing partner using vehicle reg, or create new one
             partner_ids = partner_obj.search([('vehicle_registration', '=', job.vehicle_registration)])
@@ -101,7 +129,7 @@ class cm_cron(models.Model):
             }
             lead_id = lead_obj.create(vals)
             self.env.cr.commit()
-            _logger.info("Created lead for job: " + job_id)
+            _logger.info("Created lead for job: " + str(wcfmc_id))
 
         self.wcfmc = None
         _logger.info("Finished get new leads cron")

@@ -1,8 +1,14 @@
 import re
+import datetime
 
 class Job():
 	""" Represents a job on the WCFMC website """
 	def __init__(self, wcfmc_id, date, service, vehicle_registration, make_model, registration_year, city, postcode, contact_first_name, comments):
+		if not isinstance(wcfmc_id, int):
+			raise TypeError("wcfmc_id should be int")
+		if not isinstance(date, datetime.date):
+			raise TypeError("Date should be datetime.date")
+
 		self.wcfmc_id = wcfmc_id
 		self.date = date
 		self.service = service
