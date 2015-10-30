@@ -1,0 +1,2 @@
+class UnrecognisedService(Exception):
+	pass

@@ -85,11 +85,11 @@ class crm_lead(models.Model):
                     if not vals.get('description'):
 
                         # get price from api
-                        api_key = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.api_key", context=context)
+                        api_key = self.env['ir.config_parameter'].get_param('cm.api_key')
                         if not api_key:
                             raise odoo_exceptions.except_orm(_("Missing Choice Mechanics API Key"), \
-                                    _("Please set the Choice Mechanics API Key field in Settings > Configuration > WCFMC Settings")
-                        quote_total_price = ChoiceMechanics.GetQuoteClutch(api_key, vals['vehicle_registration'], vals['branch'])
+                                    _("Please set the Choice Mechanics API Key field in Settings > Configuration > WCFMC Settings"))
+                        quote_total_price = ChoiceMechanics.GetQuote(vals['name'], api_key, vals['vehicle_registration'], vals['branch'])
 
                         # create the sale.order (quotation)
                         sale_order_vals = {
