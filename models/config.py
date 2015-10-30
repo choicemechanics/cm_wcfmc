@@ -26,7 +26,7 @@ class cm_wcfmc_config_settings(models.TransientModel):
     
     wcfmc_email = fields.Char(string='Email')
     wcfmc_password = fields.Char(string='Password')
-    runscope_auth_token = fields.Text(string='Token')
+    api_key = fields.Char(string='Choice Mechanics API Key')
     quote_message = fields.Text(string='Quote Message')
     
     def get_default_wcfmc_email(self, cr, uid, ids, context=None):
@@ -47,14 +47,14 @@ class cm_wcfmc_config_settings(models.TransientModel):
         record = self.browse(cr, uid, ids[0], context=context)
         config_parameters.set_param(cr, uid, "cm.wcfmc.password", record.wcfmc_password or '', context=context)
         
-    def get_default_runscope_auth_token(self, cr, uid, ids, context=None):
-        auth_token = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.wcfmc.runscope_auth_token", context=context)
-        return {'runscope_auth_token': auth_token}
+    def get_default_api_key(self, cr, uid, ids, context=None):
+        api_key = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.api_key", context=context)
+        return {'api_key': api_key}
 
-    def set_runscope_auth_token(self, cr, uid, ids, context=None):
+    def set_api_key(self, cr, uid, ids, context=None):
         config_parameters = self.pool.get("ir.config_parameter")
         record = self.browse(cr, uid, ids[0], context=context)
-        config_parameters.set_param(cr, uid, "cm.wcfmc.runscope_auth_token", record.runscope_auth_token or '', context=context)
+        config_parameters.set_param(cr, uid, "cm.api_key", record.api_key or '', context=context)
         
     def get_default_quote_message(self, cr, uid, ids, context=None):
         quote_message = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.wcfmc.quote_message", context=context)

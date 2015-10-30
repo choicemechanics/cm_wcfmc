@@ -28,7 +28,7 @@
     """,
     "website" : "www.teckzilla.net",
     'author': 'Teckzilla Software Solutions',
-    'depends': ['cm', 'cm_postcode', 'product', 'crm'],
+    'depends': ['cm', 'cm_branch', 'product', 'crm'],
     "demo" : [],
     "data": [
         'view/cron.xml',

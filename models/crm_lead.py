@@ -19,11 +19,14 @@
 ##############################################################################
 
 import logging
-_logger = logging.getLogger(__name__)
 
 from openerp import models, fields, api, _
+from openerp import exceptions as odoo_exceptions
 
 from .. import wcfmc_exceptions
+from .. import ChoiceMechanics
+
+_logger = logging.getLogger(__name__)
 
 class crm_lead(models.Model):
     _inherit = "crm.lead"
@@ -51,6 +54,7 @@ class crm_lead(models.Model):
         postcode_obj = self.env['cm.postcode']
         sale_obj = self.env['sale.order']
         sale_line_obj = self.env['sale.order.line']
+        message = None
 
         # Is lead qualified? (within postcode range and for offered services)
         if vals.get('postcode') and vals.get('name'):
@@ -58,7 +62,7 @@ class crm_lead(models.Model):
             if not qualified_stage_ids:
                 raise wcfmc_exceptions.LeadStageError("Missing Qualified stage")
 
-            postcode_ids = postcode_obj.search([('part_1', '=', vals.get('postcode')[:3])])
+            postcode_ids = postcode_obj.search([('area', 'ilike', vals.get('postcode')[:3])])
             product_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
             
             # Lead is qualified
@@ -66,6 +70,10 @@ class crm_lead(models.Model):
 
                 # set stage to qualified
                 vals['stage_id'] = qualified_stage_ids[0].id
+                message = 'Lead automatically qualified because we serve the postcode and product'
+
+                # get branch for postcode
+                vals['branch'] = postcode_ids and postcode_ids.branch_ids[0].name or ''
 
                 # Can we auto quote?
                 if vals.get('partner_id') and vals.get('name') and vals.get('postcode') and vals.get('wcfmc_id'):
@@ -75,6 +83,13 @@ class crm_lead(models.Model):
 
                     # We can auto quote (no comment)
                     if not vals.get('description'):
+
+                        # get price from api
+                        api_key = self.pool.get("ir.config_parameter").get_param(cr, uid, "cm.api_key", context=context)
+                        if not api_key:
+                            raise odoo_exceptions.except_orm(_("Missing Choice Mechanics API Key"), \
+                                    _("Please set the Choice Mechanics API Key field in Settings > Configuration > WCFMC Settings")
+                        quote_total_price = ChoiceMechanics.GetQuoteClutch(api_key, vals['vehicle_registration'], vals['branch'])
 
                         # create the sale.order (quotation)
                         sale_order_vals = {
@@ -94,7 +109,7 @@ class crm_lead(models.Model):
                         product_id = product_obj.search([('product_tmpl_id', '=', product_ids[0].id)])
                         sale_order_line_vals = {
                             'product_id': product_id[0].id,
-                            'price_unit' : 1,
+                            'price_unit' : quote_total_price,
                             'product_uom_qty' : 1,
                             'product_uom' : product_id[0].product_tmpl_id.uom_id.id,
                             'order_id' : sale_order[0].id,
@@ -106,10 +121,12 @@ class crm_lead(models.Model):
                         if quoted_stage_ids:
                             vals['stage_id'] = quoted_stage_ids[0].id
 
-                        _logger.info('Created quotation for job: ' + vals['wcfmc_id'])
+                        message = 'Lead auto quoted: %s' % sale_order.name
+                        _logger.info('Created quotation for job: ' + str(vals['wcfmc_id']))
 
         # create the lead
         lead = super(crm_lead, self).create(vals)
+        lead.message_post(message)
 
         # link sale.order with crm.lead
         if sale_order:

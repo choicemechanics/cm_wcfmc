@@ -67,7 +67,7 @@ class cm_cron(models.Model):
             if e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_EMAIL_PASSWORD_NOT_SET\
                 or e.message == WhoCanFixMyCar.WCFMC_LOGIN_ERROR_LOGIN_WRONG:
                 raise odoo_exceptions.except_orm(_("Could not log in"), _("Could not login to whocanfixmycar, please check the email " +\
-                                        "and password in Settings > General Settings > WCFMC Settings. Error message: ") + e.message)
+                                        "and password in Settings > Configuration > WCFMC Settings. Error message: ") + e.message)
 
         # get all new job ids
         lead_obj = self.env['crm.lead']

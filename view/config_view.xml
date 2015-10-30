@@ -25,8 +25,8 @@
                                 <label for="wcfmc_password"/>  
                             </div>
                             <div>
-                                <field name="runscope_auth_token" class="oe_inline" />
-                                <label for="runscope_auth_token"/>
+                                <field name="api_key" class="oe_inline" />
+                                <label for="api_key"/>
                             </div>
                             <div>
                                 <field name="quote_message" class="oe_inline" />

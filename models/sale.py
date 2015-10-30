@@ -21,6 +21,8 @@
 from openerp import models, fields, api, _
 from openerp import exceptions as odoo_exceptions
 
+from .. import wcfmc_exceptions
+
 class sale_order(models.Model):
     _inherit = "sale.order"
     
@@ -69,7 +71,7 @@ class sale_order(models.Model):
             message = self.env["ir.config_parameter"].get_param("cm.wcfmc.quote_message")
             if not message:
                 raise odoo_exceptions.except_orm(_("Quote Message Missing"),\
-                    _("Please set a WCFMC quote message in Settings > General Settings > WCFMC Settings"))
+                    _("Please set a WCFMC quote message in Settings > Configuration > WCFMC Settings"))
             message = message.replace('{price}', str(self.amount_total))
             message = message.replace('{name}', self.partner_id.name)
             message = message.replace('{wcfmc_id}', str(self.wcfmc_id))
@@ -79,9 +81,13 @@ class sale_order(models.Model):
             message = message.replace('{city}', self.city)
             message = message.replace('{postcode}', self.postcode)
 
-            wcfmc = self.env['cm.cron'].get_wcfmc_instance()
-            wcfmc.apply_for_job(wcfmc_id, message, quote)
-            
+            try:
+                wcfmc = self.env['cm.cron'].get_wcfmc_instance()
+                wcfmc.apply_for_job(wcfmc_id, message, quote)
+            except wcfmc_exceptions.LoginError as e:
+                raise odoo_exceptions.except_orm(_("WhoCanFixMyCar login information missing"), \
+                    _("The log in information for WhoCanFixMyCar is missing. Please enter it in Settings > Configuration > WCFMC Settings"))
+                
             self.state = 'sent'
         
 sale_order()
