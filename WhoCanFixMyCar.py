@@ -108,12 +108,13 @@ class WhoCanFixMyCar():
 
 	def apply_for_job(self, wcfmc_id, message, quote):
 		""" Apply for a job on whocanfixmycar.com """
-		raise NotImplemented('This method has not yet been tested and may cost the account owner money')
+		raise NotImplementedError('This method has not yet been tested and may cost the account owner money')
 		# TODO: Remove hard coded sub account id
 		data = {
 			'message': message,
 			'childMechanic': '3124',
 			'quote': str(quote),
 		}
+		print data
 		url = WCFMC_JOB_APPLICATION_URL % str(wcfmc_id)
 		self.session.post(url, data=data, headers=WCFMC_REQUEST_HEADERS)

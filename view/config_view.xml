@@ -29,6 +29,10 @@
                                 <label for="api_key"/>
                             </div>
                             <div>
+                                <field name="runscope_auth_token" class="oe_inline" />
+                                <label for="runscope_auth_token"/>
+                            </div>
+                            <div>
                                 <field name="quote_message" class="oe_inline" />
                                 <label for="quote_message"/>
                                 <p>

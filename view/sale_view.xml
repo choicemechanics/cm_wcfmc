@@ -7,18 +7,41 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='partner_id']" position="after">
-                    <field name="wcfmc_id"/>
-                    <field name="vehicle_registration"/>
-                    <field name="fuel"/>
-                    <field name="make_model"/>
-                    <field name="city"/>
-                    <field name="transmission"/>
-                    <field name="registration_year"/>
-                    <field name="postcode"/>
+                <xpath expr="//page[@string='Other Information']" position="after">
+                    <page string="WhoCanFixMyCar" groups="base.group_user">
+                        <group>
+                            <field name="wcfmc_id"/>
+                            <field name="wcfmc_date" />
+                            <field name="vehicle_registration"/>
+                            <field name="fuel"/>
+                            <field name="make_model"/>
+                            <field name="city"/>
+                            <field name="transmission"/>
+                            <field name="registration_year"/>
+                            <field name="postcode"/>
+                            <field name="branch_id"/>
+                        </group>
+                    </page>
+                    <page string="Auto Quote" groups="base.group_user">
+                        <group>
+                            <field name="budget_option" />
+                            <field name="budget_parts_cost" />
+                            <field name="budget_parts_retail" />
+                            <field name="budget_margin" />
+                            <field name="genuine_option" />
+                            <field name="genuine_parts_cost" />
+                            <field name="genuine_parts_retail" />
+                            <field name="genuine_margin" />
+                            <field name="bearing_type" />
+                            <field name="labour_rate" />
+                            <field name="labour_hours" />
+                            <field name="approx_milage" />
+                            <field name="flywheel_option" />
+                        </group>
+                    </page>
                 </xpath>
                 <xpath expr="//button[@name='action_quotation_send']" position="after">
-                    <button name="action_wcfmc_upload" string="Upload to WCFMC" type="object" states="draft" class="oe_highlight" groups="base.group_user"/>
+                    <button name="action_upload" string="Upload to WCFMC and Zoho" type="object" states="draft" class="oe_highlight" groups="base.group_user"/>
                 </xpath>
             </field>
         </record>
