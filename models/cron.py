@@ -20,6 +20,7 @@
 
 import logging
 import datetime
+import time
 
 from openerp import models, fields, api, _
 from openerp import exceptions as odoo_exceptions
@@ -80,6 +81,9 @@ class cm_cron(models.Model):
 
         while not stop_fetching:
             _logger.info("Fetching wcfmc ids from page " + str(page_number))
+
+            # sleep to avoid DDOS protection
+            time.sleep(2)
 
             # save job ids only for new jobs. Stop fetching once we recognise a job, or the jobs are older than the earliest_date
             latest_wcfmc_ids, hit_earliest_date = self.wcfmc.get_latest_wcfmc_ids(page_number, earliest_date)

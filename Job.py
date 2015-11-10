@@ -3,7 +3,7 @@ import datetime
 
 class Job():
 	""" Represents a job on the WCFMC website """
-	def __init__(self, wcfmc_id, date, service, vehicle_registration, make_model, registration_year, city, postcode, contact_first_name, comments):
+	def __init__(self, wcfmc_id, date, service, vehicle_registration, make_model, registration_year, city, postcode, contact_first_name, contact_phone, comments):
 		if not isinstance(wcfmc_id, int):
 			raise TypeError("wcfmc_id should be int")
 		if not isinstance(date, datetime.date):
@@ -18,6 +18,7 @@ class Job():
 		self.city = city
 		self.postcode = re.sub(r'[\W_]+', '', postcode).upper() # keep only letters and numbers
 		self.contact_first_name = contact_first_name
+		self.contact_phone = contact_phone
 		self.comments = comments
 
 	def __str__(self):

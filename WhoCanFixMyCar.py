@@ -40,6 +40,7 @@ class WhoCanFixMyCar():
 		"""
 		# load find a job at page_number
 		jobs_request = self.session.get(url + str(page_number), headers=WCFMC_REQUEST_HEADERS)
+		self._check_request_response(jobs_request)
 		soup = BeautifulSoup(jobs_request.text)
 		wcfmc_ids = []
 		hit_earliest_date = False
@@ -51,13 +52,24 @@ class WhoCanFixMyCar():
 			# get date and skip if job date is before earliest job date
 			job_date_raw = job_element.find('div', attrs={'class': 'card__date'}).text
 			job_date = self._parse_job_date(job_date_raw)
-			if job_date < earliest_date:
+			if earliest_date and job_date < earliest_date:
 				hit_earliest_date = True
 				continue
 
 			wcfmc_id = int(job_element.find('a', attrs={'class': 'card__title'}).get('href').split('/')[3])
 			wcfmc_ids.append(wcfmc_id)
 		return (wcfmc_ids, hit_earliest_date)
+
+	def _check_request_response(self, request):
+		""" Check the request for any issues and raise the appropriate errors """
+		request_content = request.content.lower()
+
+		# check for "Job Check" state
+		if request.history and request.history[0].status_code == 302 and request.url == 'https://www.whocanfixmycar.com/mechanic/job-confirmation'\
+			and 'job check' in request_content:
+			raise wcfmc_exceptions.JobCheckError()
+
+		return request
 
 	def get_latest_wcfmc_ids(self, page_number=1, earliest_date=None):
 		return self._get_wcfmc_ids(WCFMC_GET_JOBS_URL, page_number=page_number, earliest_date=earliest_date)
@@ -81,6 +93,7 @@ class WhoCanFixMyCar():
 		""" Returns a Job object populated with job data for specified wcfmc_id """
 		# load job page for wcfmc_id
 		job_request = self.session.get(WCFMC_JOB_URL + str(wcfmc_id), headers=WCFMC_REQUEST_HEADERS)
+		self._check_request_response(job_request)
 		soup = BeautifulSoup(job_request.text)
 		job_element = soup.find('div', attrs={'class': 'card'})
 
@@ -96,6 +109,12 @@ class WhoCanFixMyCar():
 		job_location_raw = job_element.find(text='location').parent.nextSibling.nextSibling.text
 		job_city, job_postcode = job_location_raw.split(', ')
 
+		# get phone - might not exist
+		try:
+			job_contact_phone = soup.find('a', {'href': lambda tel: tel.startswith('tel:')}).get('href').replace('tel:', '')
+		except Exception as e:
+			job_contact_phone = ''
+
 		job_contact_first_name = soup.find(text='driver').parent.nextSibling.nextSibling.text
 		comments = job_element.findAll('div', attrs={'class': 'col-sm-6'})[1].findAll('p')
 		if len(comments):
@@ -104,17 +123,39 @@ class WhoCanFixMyCar():
 			job_comment = []
 
 		return Job(wcfmc_id, job_date, job_service, job_vehicle_registration, job_make_model, job_registration_year, job_city, \
-					job_postcode, job_contact_first_name, job_comment)
+					job_postcode, job_contact_first_name, job_contact_phone, job_comment)
 
-	def apply_for_job(self, wcfmc_id, message, quote):
-		""" Apply for a job on whocanfixmycar.com """
+	def apply_for_job(self, wcfmc_id, message, quote, wcfmc_account_id):
+		""" Apply for a job on whocanfixmycar.com, return contact's phone number """
 		raise NotImplementedError('This method has not yet been tested and may cost the account owner money')
-		# TODO: Remove hard coded sub account id
 		data = {
 			'message': message,
-			'childMechanic': '3124',
+			'childMechanic': wcfmc_account_id,
 			'quote': str(quote),
 		}
-		print data
 		url = WCFMC_JOB_APPLICATION_URL % str(wcfmc_id)
-		self.session.post(url, data=data, headers=WCFMC_REQUEST_HEADERS)
+		application_request = self.session.post(url, data=data, headers=WCFMC_REQUEST_HEADERS)
+		if application_request.status_code == 200:
+			job = self.get_job(wcfmc_id)
+			return job.contact_phone
+		else:
+			raise ValueError("An error occured while applying for the job on wcfmc - the request returned status code " + \
+					str(application_request.status_code))
+
+	def get_accounts(self, job_ids=None):
+		""" Get WCFMC accounts. Returns a list of tuples like [(id, name), ... ] """
+		# get a job id so we can load the page to get the list of accounts
+		if not job_ids:
+			job_ids = self.get_latest_wcfmc_ids()[0]
+		job_id = job_ids[0]
+		job_request = self.session.get(WCFMC_JOB_URL + str(job_id), headers=WCFMC_REQUEST_HEADERS)
+		self._check_request_response(job_request)
+		soup = BeautifulSoup(job_request.text)
+		account_select_element = soup.find('select', attrs={'name': 'childMechanic'})
+		account_select_option_elements = account_select_element.findAll('option')
+		accounts = []
+		for option in account_select_option_elements:
+			account_id = option['value']
+			account_name = option.text
+			accounts.append((account_id, account_name))
+		return accounts

@@ -65,7 +65,8 @@ class crm_lead(models.Model):
             if not qualified_stage_ids:
                 raise wcfmc_exceptions.LeadStageError("Missing Qualified stage")
 
-            postcode_ids = postcode_obj.search([('area', 'ilike', vals.get('postcode')[:3])])
+            # find postcodes that match exactly the first two letters, or the first three letters
+            postcode_ids = postcode_obj.search([('area', 'in', [vals.get('postcode')[:2], vals.get('postcode')[:3]])])
             product_ids = product_tmpl_obj.search([('wcfmc_job_name', '=', vals.get('name'))])
             
             # Lead is qualified
@@ -76,7 +77,8 @@ class crm_lead(models.Model):
                 message = _('Lead automatically qualified because we serve the postcode and product')
 
                 # get branch for postcode
-                vals['branch'] = postcode_ids and postcode_ids.branch_ids[0].name or ''
+                branch = [postcode.branch_ids[0] for postcode in postcode_ids if postcode.branch_ids][0]
+                vals['branch_id'] = branch.id
 
                 # Can we auto quote?
                 if vals.get('partner_id') and vals.get('name') and vals.get('postcode') and vals.get('wcfmc_id'):
@@ -94,7 +96,7 @@ class crm_lead(models.Model):
                                     _("Please set the Choice Mechanics API Key field in Settings > Configuration > WCFMC Settings"))
 
                         try:
-                            quote = Quote.Quote(api_key, vals['vehicle_registration'], vals['branch'], vals['name'])
+                            quote = Quote.Quote(api_key, vals['vehicle_registration'], branch.name, vals['name'])
                         except cm_exceptions.NoKitPriceError:
                             quote = None
                             message = _("Tried to auto quote but no kit price found found from API lookup")
@@ -127,18 +129,31 @@ class crm_lead(models.Model):
 
                                 # quote vals
                                 'budget_option': quote.budget_option,
+                                'budget_kit_name': quote.budget_kit_name,
+                                'budget_kit_type': quote.budget_kit_type,
                                 'budget_parts_cost': quote.budget_parts_cost,
                                 'budget_parts_retail': quote.budget_parts_retail,
                                 'budget_margin': quote.budget_margin,
+                                'budget_bearing_name': quote.budget_bearing_name,
+                                'budget_bearing_retail': quote.budget_bearing_retail,
+                                'budget_bearing_cost': quote.budget_bearing_cost,
+
                                 'genuine_option': quote.genuine_option,
+                                'genuine_kit_name': quote.genuine_kit_name,
+                                'genuine_kit_type': quote.genuine_kit_type,
                                 'genuine_parts_cost': quote.genuine_parts_cost,
                                 'genuine_parts_retail': quote.genuine_parts_retail,
                                 'genuine_margin': quote.genuine_margin,
+                                'genuine_bearing_name': quote.genuine_bearing_name,
+                                'genuine_bearing_retail': quote.genuine_bearing_retail,
+                                'genuine_bearing_cost': quote.genuine_bearing_cost,
+
                                 'bearing_type': quote.bearing_type,
                                 'labour_rate': quote.labour_rate,
                                 'labour_hours': quote.labour_hours,
                                 'approx_milage': quote.approx_milage,
-                                'flywheel_option': quote.flywheel,
+
+                                'flywheel_option': quote.flywheel_option,
                             }
                             sale_order = sale_obj.create(sale_order_vals)
 
@@ -154,7 +169,7 @@ class crm_lead(models.Model):
                             }
                             sale_order_line_id = sale_line_obj.create(sale_order_line_vals)
 
-                            # trigger upload
+                            # trigger upload to wcfmc and zoho
                             sale_order.action_upload()
 
                             # set lead stage to quoted

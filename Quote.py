@@ -45,6 +45,7 @@ class Quote():
                 raise ValueError('Look up failed (This vehicle has not been looked up correctly)')
 
             quote_xml = quote_request.content
+            self.quote_raw = quote_xml
             quote_element = fromstring(quote_xml)
 
             # extract kit
@@ -54,25 +55,55 @@ class Quote():
             if str(budget_kit_element) == 'None' and str(genuine_kit_element) == 'None': # normal None check is not supported by xml lib
                 raise cm_exceptions.NoKitPriceError()
 
+            # extract budget option info
             self.budget_option = bool(budget_kit_element)
             if self.budget_option:
+                self.budget_kit_name = budget_kit_element.find('.//KitName').text or ''
+                self.budget_kit_type = budget_kit_element.find('.//KitType').text or ''
+
                 self.budget_parts_cost = float(budget_kit_element.find('.//TotalCost').text or '0')
                 self.budget_parts_retail = float(budget_kit_element.find('.//TotalPrice').text or '0')
                 self.budget_margin = float(budget_kit_element.find('.//TotalMargin').text or '0')
+
+                self.budget_bearing_name = budget_kit_element.find('.//BearingName').text or ''
+                self.budget_bearing_retail = budget_kit_element.find('.//BearingRetail').text or 0
+                self.budget_bearing_cost = budget_kit_element.find('.//BearingCost').text or 0
             else:
+                self.budget_kit_name = ''
+                self.budget_kit_type = ''
+
                 self.budget_parts_cost = 0
                 self.budget_parts_retail = 0
                 self.budget_margin = 0
 
+                self.budget_bearing_name = ''
+                self.budget_bearing_retail = 0
+                self.budget_bearing_cost = 0
+
+            # extract genuine option info
             self.genuine_option = bool(genuine_kit_element)
             if self.genuine_option:
+                self.genuine_kit_name = genuine_kit_element.find('.//KitName').text or ''
+                self.genuine_kit_type = genuine_kit_element.find('.//KitType').text or ''
+
                 self.genuine_parts_cost = float(genuine_kit_element.find('.//TotalCost').text or '0')
                 self.genuine_parts_retail = float(genuine_kit_element.find('.//TotalPrice').text or '0')
                 self.genuine_margin = float(genuine_kit_element.find('.//TotalMargin').text or '0')
+
+                self.genuine_bearing_name = genuine_kit_element.find('.//BearingName').text or ''
+                self.genuine_bearing_retail = genuine_kit_element.find('.//BearingRetail').text or 0
+                self.genuine_bearing_cost = genuine_kit_element.find('.//BearingCost').text or 0
             else:
+                self.genuine_kit_name = ''
+                self.genuine_kit_type = ''
+
                 self.genuine_parts_cost = 0
                 self.genuine_parts_retail = 0
                 self.genuine_margin = 0
+
+                self.genuine_bearing_name = ''
+                self.genuine_bearing_retail = 0
+                self.genuine_bearing_cost = 0
                 
             # extract quote details
             self.quote_details = quote_element.find('.//QuoteDetails')

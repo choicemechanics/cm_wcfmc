@@ -21,7 +21,7 @@
 from openerp import models, fields, api, _
 from openerp import exceptions as odoo_exceptions
 
-from .. import ChoiceMechanics
+from .. import Quote
 
 class product_template(models.Model):
     _inherit = "product.template"
@@ -44,7 +44,7 @@ class product_template(models.Model):
 
     def _check_wcfmc_job_name_recognised(self, vals):
     	wcfmc_job_name = vals.get('wcfmc_job_name', '')
-    	if wcfmc_job_name and wcfmc_job_name not in ChoiceMechanics.SERVICE_TERMS:
+    	if wcfmc_job_name and wcfmc_job_name not in Quote.SERVICE_TERMS:
     		raise odoo_exceptions.except_orm(_("WCFMC Job Name Not Recognised"), \
     			_("Auto quoting for the WCFMC Job Name %s has not been implemented so you cannot create a product for it" % wcfmc_job_name))
 
