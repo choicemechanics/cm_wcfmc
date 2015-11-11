@@ -2,16 +2,23 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import date
 import datetime
+import logging
+import time
 
 from Job import Job
 import wcfmc_exceptions
 
+_logger = logging.getLogger(__name__)
+
+WCFMC_BASE_URL = 'https://www.whocanfixmycar.com'
 WCFMC_LOGIN_URL = 'https://www.whocanfixmycar.com/login'
 WCFMC_GET_JOBS_URL = 'https://www.whocanfixmycar.com/find-jobs?page='
 WCFMC_JOBS_WON_URL = 'https://www.whocanfixmycar.com/mechanic/jobs?tab=jobs-won&?page='
 WCFMC_JOBS_NOT_WON_URL = 'https://www.whocanfixmycar.com/mechanic/jobs?tab=not-won-jobs&page='
 WCFMC_JOB_URL = 'https://www.whocanfixmycar.com/mechanic/jobs/'
 WCFMC_JOB_APPLICATION_URL = 'https://www.whocanfixmycar.com/mechanic/jobs/%s/apply'
+WCFMC_JOB_CONFIRMATION_URL = 'https://www.whocanfixmycar.com/mechanic/job-confirmation'
+
 WCFMC_REQUEST_HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36'}
 
 WCFMC_LOGIN_ERROR_EMAIL_PASSWORD_NOT_SET = 'email or password not set'
@@ -159,3 +166,22 @@ class WhoCanFixMyCar():
 			account_name = option.text
 			accounts.append((account_id, account_name))
 		return accounts
+
+	def clear_job_check(self):
+		""" Click "no" on all jobs on the job-confirmation page """
+		while True:
+			# load "no" button urls from job-confirmation page
+			job_confirmation_request = self.session.get(WCFMC_JOB_CONFIRMATION_URL, headers=WCFMC_REQUEST_HEADERS)
+			soup = BeautifulSoup(job_confirmation_request.text)
+			no_forms = soup.findAll('form', {'action': lambda action: action[-2:] == 'no'})
+			actions = [WCFMC_BASE_URL + form.get('action') for form in no_forms]
+			
+			if not actions:
+				_logger.info('No jobs to confirm')
+				break
+
+			# send post request to no button action
+			_logger.info('Confirming "no" on %s jobs' % str(len(actions)))
+			for action in actions:
+				self.session.post(action)
+				time.sleep(1) # avoid overzealous ddos protection

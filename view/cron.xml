@@ -3,7 +3,7 @@
     <data noupdate="1">
 
         <record forcecreate="True" id="ir_cron_scheduler_get_new_leads" model="ir.cron">
-            <field name="name">Get New Leads</field>
+            <field name="name">WCFMC Get New Leads</field>
             <field eval="True" name="active" />
             <field name="user_id" ref="base.user_root" />
             <field name="interval_number">1</field>
@@ -15,7 +15,7 @@
         </record>
 
         <record forcecreate="True" id="ir_cron_scheduler_update_quotation" model="ir.cron">
-            <field name="name">Update Quotations</field>
+            <field name="name">WCFMC Update Quotations</field>
             <field eval="True" name="active" />
             <field name="user_id" ref="base.user_root" />
             <field name="interval_number">1</field>
@@ -24,6 +24,18 @@
             <field eval="False" name="doall" />
             <field eval="'cm.cron'" name="model" />
             <field eval="'update_quotations'" name="function" />
+        </record>
+
+        <record forcecreate="True" id="ir_cron_scheduler_clear_job_check" model="ir.cron">
+            <field name="name">WCFMC Clear Job Check</field>
+            <field eval="True" name="active" />
+            <field name="user_id" ref="base.user_root" />
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall" />
+            <field eval="'cm.cron'" name="model" />
+            <field eval="'clear_job_check'" name="function" />
         </record>
     </data>
 </openerp>

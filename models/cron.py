@@ -146,4 +146,13 @@ class cm_cron(models.Model):
         _logger.info("Finished update quotations cron")
         return True
 
+    @api.model
+    def clear_job_check(self):
+        """ Click "no" on all jobs on the job-confirmation page """
+        _logger.info("Running clear job check cron")
+        self.wcfmc = self.get_wcfmc_instance()
+        self.wcfmc.clear_job_check()
+        _logger.info("Finished clear job check cron")
+        return True
+
 cm_cron()
